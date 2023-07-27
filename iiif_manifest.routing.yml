@@ -7,3 +7,11 @@ iiif_manifest.generate:
     _format: json
   requirements:
     _permission: 'access content'
+
+iiif_manifest.settings:
+  path: '/admin/config/content/iiif_manifest'
+  defaults:
+    _form: '\Drupal\iiif_manifest\Form\SettingsForm'
+    _title: 'My Module Settings'
+  requirements:
+    _permission: 'administer site configuration'

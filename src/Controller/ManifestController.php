@@ -21,9 +21,12 @@ class ManifestController extends ControllerBase {
       // Assume that the node has fields 'title', 'description', and 'image_url'.
       $title = $nodeEntity->get('title')->value;
 
+      $config = \Drupal::config('iiif_manifest.settings');
+      $descriptionField = $config->get('description_field');
+
       // Check if the node has 'description' field.
-      $description = $nodeEntity->hasField('description') && !$nodeEntity->get('description')->isEmpty() 
-      ? $nodeEntity->get('description')->value 
+      $description = $nodeEntity->hasField($descriptionField) && !$nodeEntity->get($descriptionField)->isEmpty() 
+      ? $nodeEntity->get($descriptionField)->value 
       : '';
 
       // Check if the node has 'image_url' field.
