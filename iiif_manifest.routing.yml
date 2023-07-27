@@ -1,6 +1,6 @@
 # iiif_manifest.routing.yml
 iiif_manifest.generate:
-  path: '/iiif/{version}/{node}/manifest.json'
+  path: '/iiif/{version}/{node}/manifest'
   methods: [GET]
   defaults:
     _controller: '\Drupal\iiif_manifest\Controller\ManifestController::generateManifest'
