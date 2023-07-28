@@ -9,16 +9,19 @@ function iiif_server_install() {
       'type' => 'integer',
       'label' => 'Image Width',
       'description' => 'The width of the image',
+      'cardinality' => -1,
     ],
     'field_image_height' => [
       'type' => 'integer',
       'label' => 'Image Height',
       'description' => 'The height of the image',
+      'cardinality' => -1,
     ],
     'field_image_url' => [
         'type' => 'string',
         'label' => 'field_image_url',
         'description' => 'The URL of the image',
+        'cardinality' => -1,
     ],
   ];
 
@@ -30,6 +33,7 @@ function iiif_server_install() {
         'field_name' => $field_name,
         'entity_type' => 'node',
         'type' => $field_info['type'],
+        'cardinality' => $field_info['cardinality'], // Here's where we use the cardinality setting
       ]);
       $field_storage->save();
 

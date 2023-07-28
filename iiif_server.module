@@ -9,19 +9,33 @@ function iiif_server_entity_presave(EntityInterface $entity) {
   // Only act on nodes.
   if ($entity->getEntityTypeId() == 'node') {
     // Check if the node has a field_image_url field.
-    if ($entity->hasField('field_image_url') && !$entity->get('field_image_url')->isEmpty()) {
-      // Get the image URL.
-      $image_url = $entity->get('field_image_url')->value;
-
-      // Get the image dimensions.
-      list($width, $height) = getimagesize($image_url);
+    if ($entity->hasField('field_image_url')) {
+      // Initialize image width and height arrays
+      $image_widths = [];
+      $image_heights = [];
+      
+      // Loop over each item in the field.
+      foreach ($entity->get('field_image_url') as $item) {
+        if (!$item->isEmpty()) {
+          // Get the image dimensions.
+          $image_info = getimagesize($item->value);
+          if ($image_info) {
+            $width = $image_info[0];
+            $height = $image_info[1];
+            
+            // Add the dimensions to the arrays
+            $image_widths[] = $width;
+            $image_heights[] = $height;
+          }
+        }
+      }
 
       // Check if the node has the width and height fields and set their values.
-      if ($entity->hasField('field_image_width') && $width) {
-        $entity->set('field_image_width', $width);
+      if ($entity->hasField('field_image_width')) {
+        $entity->set('field_image_width', $image_widths);
       }
-      if ($entity->hasField('field_image_height') && $height) {
-        $entity->set('field_image_height', $height);
+      if ($entity->hasField('field_image_height')) {
+        $entity->set('field_image_height', $image_heights);
       }
     }
   }

@@ -30,20 +30,7 @@ class IiifServerController extends ControllerBase {
       : '';
 
       // Check if the node has 'field_image_url' field.
-      $imageUrl = $nodeEntity->hasField('field_image_url') && !$nodeEntity->get('field_image_url')->isEmpty() 
-      ? $nodeEntity->get('field_image_url')->value 
-      : '';
-
-      $width = $nodeEntity->hasField('field_image_width') && !$nodeEntity->get('field_image_width')->isEmpty() 
-        ? intval($nodeEntity->get('field_image_width')->value) 
-        : 0;
-
-      $height = $nodeEntity->hasField('field_image_height') && !$nodeEntity->get('field_image_height')->isEmpty() 
-        ? intval($nodeEntity->get('field_image_height')->value) 
-        : 0;
-
       $protocol = isset($_SERVER['HTTPS']) ? 'https' : 'http';
-
       $prefix = $protocol . "://" . $_SERVER['HTTP_HOST'] . "/iiif/{$version}/{$node}/";
 
       $manifest = [
@@ -55,38 +42,53 @@ class IiifServerController extends ControllerBase {
         'sequences' => [
           [
             '@type' => 'sc:Sequence',
-            'canvases' => [
-              [
-                '@type' => 'sc:Canvas',
-                '@id' => $prefix . 'canvas',
-                'width' => $width,
-                'height' => $height,
-                'thumbnail' => [
-                  '@id' => $imageUrl,
-                  "@type" => "dctypes:Image",
-                  "format" => "image/jpeg",
-                  "width" => $width,
-                  "height" => $height,
-                ],
-                'images' => [
-                  [
-                    '@type' => 'oa:Annotation',
-                    'motivation' => 'sc:painting',
-                    'resource' => [
-                      '@type' => 'dctypes:Image',
-                      '@id' => $imageUrl,
-                      'width' => $width,
-                      'height' => $height,
-                      'format' => 'image/jpeg'
-                    ],
-                    'on' => $prefix . 'canvas',
-                  ],
-                ],
-              ],
-            ],
+            'canvases' => [],
           ],
         ],
       ];
+
+      if ($nodeEntity->hasField('field_image_url') && !$nodeEntity->get('field_image_url')->isEmpty()) {
+        foreach ($nodeEntity->get('field_image_url') as $index => $field) {
+
+          $num = $index + 1;
+ 
+          $imageUrl = $field->value;
+          $width = $nodeEntity->hasField('field_image_width') && !$nodeEntity->get('field_image_width')->isEmpty() 
+            ? intval($nodeEntity->get('field_image_width')[$index]->value) 
+            : 0;
+          $height = $nodeEntity->hasField('field_image_height') && !$nodeEntity->get('field_image_height')->isEmpty() 
+            ? intval($nodeEntity->get('field_image_height')[$index]->value) 
+            : 0;
+          $canvas = [
+            '@type' => 'sc:Canvas',
+            '@id' => $prefix . 'canvas/p' . $num,
+            'width' => $width,
+            'height' => $height,
+            'thumbnail' => [
+              '@id' => $imageUrl,
+              "@type" => "dctypes:Image",
+              "format" => "image/jpeg",
+              "width" => $width,
+              "height" => $height,
+            ],
+            'images' => [
+              [
+                '@type' => 'oa:Annotation',
+                'motivation' => 'sc:painting',
+                'resource' => [
+                  '@type' => 'dctypes:Image',
+                  '@id' => $imageUrl,
+                  'width' => $width,
+                  'height' => $height,
+                  'format' => 'image/jpeg'
+                ],
+                'on' => $prefix . 'canvas/p' . $num,
+              ],
+            ],
+          ];
+          $manifest['sequences'][0]['canvases'][] = $canvas;
+        }
+      }
 
     } elseif($version == "3") {
       $manifest["@context"] = "http://iiif.io/api/presentation/3/context.json";
