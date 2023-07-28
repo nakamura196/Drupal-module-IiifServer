@@ -15,6 +15,11 @@ function iiif_manifest_install() {
       'label' => 'Image Height',
       'description' => 'The height of the image',
     ],
+    'field_image_url' => [
+        'type' => 'string',
+        'label' => 'field_image_url',
+        'description' => 'The URL of the image',
+    ],
   ];
 
   foreach ($fields as $field_name => $field_info) {

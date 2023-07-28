@@ -18,7 +18,7 @@ class ManifestController extends ControllerBase {
     }
 
     if($version == "2") {
-      // Assume that the node has fields 'title', 'description', and 'image_url'.
+      // Assume that the node has fields 'title', 'description', and 'field_image_url'.
       $title = $nodeEntity->get('title')->value;
 
       $config = \Drupal::config('iiif_manifest.settings');
@@ -29,17 +29,27 @@ class ManifestController extends ControllerBase {
       ? $nodeEntity->get($descriptionField)->value 
       : '';
 
-      // Check if the node has 'image_url' field.
-      $imageUrl = $nodeEntity->hasField('image_url') && !$nodeEntity->get('image_url')->isEmpty() 
-      ? $nodeEntity->get('image_url')->value 
+      // Check if the node has 'field_image_url' field.
+      $imageUrl = $nodeEntity->hasField('field_image_url') && !$nodeEntity->get('field_image_url')->isEmpty() 
+      ? $nodeEntity->get('field_image_url')->value 
       : '';
 
+      $width = $nodeEntity->hasField('field_image_width') && !$nodeEntity->get('field_image_width')->isEmpty() 
+        ? intval($nodeEntity->get('field_image_width')->value) 
+        : 0;
+
+      $height = $nodeEntity->hasField('field_image_height') && !$nodeEntity->get('field_image_height')->isEmpty() 
+        ? intval($nodeEntity->get('field_image_height')->value) 
+        : 0;
+
       $protocol = isset($_SERVER['HTTPS']) ? 'https' : 'http';
+
+      $prefix = $protocol . "://" . $_SERVER['HTTP_HOST'] . "/iiif/{$version}/{$node}/";
 
       $manifest = [
         '@context' => 'http://iiif.io/api/presentation/2/context.json',
         '@type' => 'sc:Manifest',
-        '@id' => $protocol . "://" . $_SERVER['HTTP_HOST'] . "/iiif/{$version}/{$node}/manifest",
+        '@id' => $prefix . 'manifest',
         'label' => $title,
         'description' => $description,
         'sequences' => [
@@ -48,6 +58,16 @@ class ManifestController extends ControllerBase {
             'canvases' => [
               [
                 '@type' => 'sc:Canvas',
+                '@id' => $prefix . 'canvas',
+                'width' => $width,
+                'height' => $height,
+                'thumbnail' => [
+                  '@id' => $imageUrl,
+                  "@type" => "dctypes:Image",
+                  "format" => "image/jpeg",
+                  "width" => $width,
+                  "height" => $height,
+                ],
                 'images' => [
                   [
                     '@type' => 'oa:Annotation',
@@ -55,13 +75,11 @@ class ManifestController extends ControllerBase {
                     'resource' => [
                       '@type' => 'dctypes:Image',
                       '@id' => $imageUrl,
-                      'format' => 'image/jpeg',
-                      'service' => [
-                        '@context' => 'http://iiif.io/api/image/2/context.json',
-                        '@id' => $imageUrl,
-                        'profile' => 'http://iiif.io/api/image/2/level1.json',
-                      ],
+                      'width' => $width,
+                      'height' => $height,
+                      'format' => 'image/jpeg'
                     ],
+                    'on' => $prefix . 'canvas',
                   ],
                 ],
               ],
