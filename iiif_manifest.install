@@ -1,0 +1,42 @@
+<?php
+/**
+ * Implements hook_install().
+ */
+function iiif_manifest_install() {
+  // Define the fields to be added.
+  $fields = [
+    'field_image_width' => [
+      'type' => 'integer',
+      'label' => 'Image Width',
+      'description' => 'The width of the image',
+    ],
+    'field_image_height' => [
+      'type' => 'integer',
+      'label' => 'Image Height',
+      'description' => 'The height of the image',
+    ],
+  ];
+
+  foreach ($fields as $field_name => $field_info) {
+    // Check if the field already exists.
+    if (!\Drupal::service('entity_field.manager')->getFieldStorageDefinitions('node')[$field_name]) {
+      // Create the field storage.
+      $field_storage = \Drupal\field\Entity\FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $field_info['type'],
+      ]);
+      $field_storage->save();
+
+      // Create the field.
+      $field = \Drupal\field\Entity\FieldConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'bundle' => 'article', // Change this to your content type.
+        'label' => $field_info['label'],
+        'description' => $field_info['description'],
+      ]);
+      $field->save();
+    }
+  }
+}
