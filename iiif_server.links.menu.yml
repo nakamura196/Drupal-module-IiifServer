@@ -1,0 +1,6 @@
+iiif_server.admin:
+  title: 'IIIF Server Settings'
+  route_name: iiif_server.settings
+  description: 'Configure IIIF Server'
+  parent: system.admin_config_services
+  weight: 100
