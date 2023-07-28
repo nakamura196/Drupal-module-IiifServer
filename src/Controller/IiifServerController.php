@@ -1,6 +1,6 @@
 <?php
 // src/Controller/IiifServerController.php
-namespace Drupal\IiifServer\Controller;
+namespace Drupal\iiif_server\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,7 +21,7 @@ class IiifServerController extends ControllerBase {
       // Assume that the node has fields 'title', 'description', and 'field_image_url'.
       $title = $nodeEntity->get('title')->value;
 
-      $config = \Drupal::config('IiifServer.settings');
+      $config = \Drupal::config('iiif_server.settings');
       $descriptionField = $config->get('description_field');
 
       // Check if the node has 'description' field.

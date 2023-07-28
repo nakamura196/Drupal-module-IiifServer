@@ -1,0 +1,17 @@
+# iiif_server.routing.yml
+iiif_server.generate:
+  path: '/iiif/{version}/{node}/iiif_server'
+  methods: [GET]
+  defaults:
+    _controller: '\Drupal\iiif_server\Controller\IiifServerController::generateManifest'
+    _format: json
+  requirements:
+    _permission: 'access content'
+
+iiif_server.settings:
+  path: '/admin/config/services/iiif_server'
+  defaults:
+    _form: '\Drupal\iiif_server\Form\SettingsForm'
+    _title: 'IIIF Server Settings'
+  requirements:
+    _permission: 'administer site configuration'
