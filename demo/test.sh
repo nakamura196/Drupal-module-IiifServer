@@ -1,6 +1,6 @@
 # ブランチを作成して、リモートにプッシュする
 
-name=05
+name=$0
 git branch feature/$name
 git checkout feature/$name
 git push --set-upstream origin feature/$name
