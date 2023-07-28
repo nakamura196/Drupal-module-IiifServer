@@ -1,0 +1,28 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_presave().
+ */
+function iiif_manifest_entity_presave(EntityInterface $entity) {
+  // Only act on nodes.
+  if ($entity->getEntityTypeId() == 'node') {
+    // Check if the node has a field_image_url field.
+    if ($entity->hasField('field_image_url') && !$entity->get('field_image_url')->isEmpty()) {
+      // Get the image URL.
+      $image_url = $entity->get('field_image_url')->value;
+
+      // Get the image dimensions.
+      list($width, $height) = getimagesize($image_url);
+
+      // Check if the node has the width and height fields and set their values.
+      if ($entity->hasField('field_image_width') && $width) {
+        $entity->set('field_image_width', $width);
+      }
+      if ($entity->hasField('field_image_height') && $height) {
+        $entity->set('field_image_height', $height);
+      }
+    }
+  }
+}
