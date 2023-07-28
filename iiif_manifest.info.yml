@@ -1,6 +1,0 @@
-# iiif_manifest.info.yml
-name: IIIF Manifest
-description: Generates IIIF Manifest files.
-package: Custom
-type: module
-core_version_requirement: ^8 || ^9 || ^10

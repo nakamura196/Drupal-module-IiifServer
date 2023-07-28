@@ -1,11 +1,11 @@
 <?php
-// src/Controller/ManifestController.php
-namespace Drupal\iiif_manifest\Controller;
+// src/Controller/IiifServerController.php
+namespace Drupal\IiifServer\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class ManifestController extends ControllerBase {
+class IiifServerController extends ControllerBase {
   public function generateManifest($version, $node) {
 
     // TODO: Implement logic to generate manifest based on the node.
@@ -21,7 +21,7 @@ class ManifestController extends ControllerBase {
       // Assume that the node has fields 'title', 'description', and 'field_image_url'.
       $title = $nodeEntity->get('title')->value;
 
-      $config = \Drupal::config('iiif_manifest.settings');
+      $config = \Drupal::config('IiifServer.settings');
       $descriptionField = $config->get('description_field');
 
       // Check if the node has 'description' field.

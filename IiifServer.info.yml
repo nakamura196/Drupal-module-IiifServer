@@ -1,0 +1,6 @@
+# IiifServer.info.yml
+name: IIIF Server
+description: IIIF Server is a module for Drupal that integrates the IIIF specifications to allow to process and share instantly images of any size and medias (pdf, audio, video, 3D…) in the desired formats.
+package: Custom
+type: module
+core_version_requirement: ^10

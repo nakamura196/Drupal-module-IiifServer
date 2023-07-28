@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\iiif_manifest\Form;
+namespace Drupal\IiifServer\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -10,21 +10,21 @@ class SettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'iiif_manifest_settings';
+    return 'IiifServer_settings';
   }
 
   /**
    * {@inheritdoc}
    */
   protected function getEditableConfigNames() {
-    return ['iiif_manifest.settings'];
+    return ['IiifServer.settings'];
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = $this->config('iiif_manifest.settings');
+    $config = $this->config('IiifServer.settings');
 
     $form['description_field'] = [
       '#type' => 'textfield',
@@ -39,7 +39,7 @@ class SettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->config('iiif_manifest.settings')
+    $this->config('IiifServer.settings')
       ->set('description_field', $form_state->getValue('description_field'))
       ->save();
 

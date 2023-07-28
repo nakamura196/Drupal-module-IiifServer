@@ -5,7 +5,7 @@ use Drupal\Core\Entity\EntityInterface;
 /**
  * Implements hook_entity_presave().
  */
-function iiif_manifest_entity_presave(EntityInterface $entity) {
+function IiifServer_entity_presave(EntityInterface $entity) {
   // Only act on nodes.
   if ($entity->getEntityTypeId() == 'node') {
     // Check if the node has a field_image_url field.

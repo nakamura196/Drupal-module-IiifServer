@@ -2,7 +2,7 @@
 /**
  * Implements hook_install().
  */
-function iiif_manifest_install() {
+function IiifServer_install() {
   // Define the fields to be added.
   $fields = [
     'field_image_width' => [
