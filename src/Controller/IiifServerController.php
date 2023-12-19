@@ -14,8 +14,24 @@ class IiifServerController extends ControllerBase {
 
     $nodeStorage = \Drupal::entityTypeManager()->getStorage('node');
     if (!$nodeEntity = $nodeStorage->load($node)) {
-      return new JsonResponse(['error' => 'Invalid node ID.'], 400);
+
+      // entity.repository サービスを取得
+      $entityRepository = \Drupal::service('entity.repository');
+
+      // UUIDを使用してノードエンティティをロード
+      $nodeEntity = $entityRepository->loadEntityByUuid('node', $node);
+      if (!$nodeEntity) {
+        return new JsonResponse(['error' => 'Invalid node UUID.'], 400);
+      }
+
+      // return new JsonResponse(['error' => 'Invalid node ID.'], 400);
     }
+
+    // ノードのUUIDを取得
+    $uuid = $nodeEntity->uuid();
+
+    // ノードのタイプを取得
+    $nodeType = $nodeEntity->getType();
 
     if($version == "2") {
       // Assume that the node has fields 'title', 'description', and 'field_iiif_image_url'.
@@ -49,6 +65,7 @@ class IiifServerController extends ControllerBase {
         'description' => $description,
         'license' => null,
         'attribution' => $iiifserver_manifest_attribution_default,
+        'related' => $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/jsonapi/node/" . $nodeType . "/" . $uuid,
         'sequences' => [
           [
             '@id' => $prefix . 'sequence/normal',
