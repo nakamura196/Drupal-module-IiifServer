@@ -18,79 +18,107 @@ class IiifServerController extends ControllerBase {
     }
 
     if($version == "2") {
-      // Assume that the node has fields 'title', 'description', and 'field_image_url'.
+      // Assume that the node has fields 'title', 'description', and 'field_iiif_image_url'.
       $title = $nodeEntity->get('title')->value;
 
       $config = \Drupal::config('iiif_server.settings');
       $descriptionField = $config->get('description_field');
+
+      $iiifserver_manifest_attribution_default = $config->get('iiifserver_manifest_attribution_default');
+
+      $iiifserver_manifest_rights_text = $config->get('iiifserver_manifest_rights_text');
 
       // Check if the node has 'description' field.
       $description = $nodeEntity->hasField($descriptionField) && !$nodeEntity->get($descriptionField)->isEmpty() 
       ? $nodeEntity->get($descriptionField)->value 
       : '';
 
-      // Check if the node has 'field_image_url' field.
+      // 現在のURLを取得し、'/iiif/' で分割
+      $currentUrlParts = explode('/iiif/', $_SERVER['REQUEST_URI'], 2);
+      $baseUrl = $currentUrlParts[0];
+      
+      // $prefixの生成
       $protocol = isset($_SERVER['HTTPS']) ? 'https' : 'http';
-      $prefix = $protocol . "://" . $_SERVER['HTTP_HOST'] . "/iiif/{$version}/{$node}/";
+      $prefix = $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/iiif/{$version}/{$node}/";
 
       $manifest = [
         '@context' => 'http://iiif.io/api/presentation/2/context.json',
-        '@type' => 'sc:Manifest',
         '@id' => $prefix . 'manifest',
+        '@type' => 'sc:Manifest',
         'label' => $title,
         'description' => $description,
+        'license' => null,
+        'attribution' => $iiifserver_manifest_attribution_default,
         'sequences' => [
           [
+            '@id' => $prefix . 'sequence/normal',
             '@type' => 'sc:Sequence',
+            "label" => "Current Page Order",
             'canvases' => [],
           ],
         ],
       ];
 
-      if ($nodeEntity->hasField('field_image_url') && !$nodeEntity->get('field_image_url')->isEmpty()) {
-        foreach ($nodeEntity->get('field_image_url') as $index => $field) {
+      if ($iiifserver_manifest_rights_text) {
+        $manifest['license'] = $iiifserver_manifest_rights_text;
+      }
 
+      if ($nodeEntity->hasField('field_iiif_images') && !$nodeEntity->get('field_iiif_images')->isEmpty()) {
+        foreach ($nodeEntity->get('field_iiif_images') as $index => $fieldItem) {
           $num = $index + 1;
- 
-          $imageUrl = $field->value;
-          $width = $nodeEntity->hasField('field_image_width') && !$nodeEntity->get('field_image_width')->isEmpty() 
-            ? intval($nodeEntity->get('field_image_width')[$index]->value) 
-            : 0;
-          $height = $nodeEntity->hasField('field_image_height') && !$nodeEntity->get('field_image_height')->isEmpty() 
-            ? intval($nodeEntity->get('field_image_height')[$index]->value) 
-            : 0;
+    
+          // 各画像のURLと幅を取得
+          $uri = $fieldItem->entity->field_iiif_image_url->uri;
+
+          $serviceId = str_replace('/info.json', '', $uri);
+
+          $imageUrl = str_replace('info.json', 'full/full/0/default.jpg', $uri);
+          $thumbnailUrl = str_replace('info.json', 'full/!200,200/0/default.jpg', $uri);
+
+          $width = intval($fieldItem->entity->field_iiif_image_width->value);
+          $height = intval($fieldItem->entity->field_iiif_image_height->value); // 高さも同様に取得
+    
+          $canvas_id = $prefix . 'canvas/p' . $num;
+    
+          // Canvasの生成
           $canvas = [
+            '@id' => $canvas_id,
             '@type' => 'sc:Canvas',
-            '@id' => $prefix . 'canvas/p' . $num,
+            'label' => '[' . $num . ']',
             'width' => $width,
             'height' => $height,
             'thumbnail' => [
-              '@id' => $imageUrl,
-              "@type" => "dctypes:Image",
-              "format" => "image/jpeg",
-              "width" => $width,
-              "height" => $height,
+              '@id' => $thumbnailUrl
             ],
             'images' => [
               [
+                "@id" => $canvas_id . '/annotation',
                 '@type' => 'oa:Annotation',
                 'motivation' => 'sc:painting',
                 'resource' => [
-                  '@type' => 'dctypes:Image',
                   '@id' => $imageUrl,
+                  '@type' => 'dctypes:Image',
+                  'format' => 'image/jpeg',
                   'width' => $width,
                   'height' => $height,
-                  'format' => 'image/jpeg'
+                  "service" => [
+                    "@context" => "http://iiif.io/api/image/2/context.json",
+                    "@id" => $serviceId,
+                    "profile" => "http://iiif.io/api/image/2/level2.json",
+                    "width" => $width,
+                    "height" => $height
+                  ]
                 ],
-                'on' => $prefix . 'canvas/p' . $num,
+                'on' => $canvas_id,
               ],
             ],
           ];
           $manifest['sequences'][0]['canvases'][] = $canvas;
         }
       }
-
-    } elseif($version == "3") {
+    
+    } elseif ($version == "3") {
+      // IIIFバージョン3の処理...
       $manifest["@context"] = "http://iiif.io/api/presentation/3/context.json";
     } else {
       return new JsonResponse(['error' => 'Invalid version.'], 400);

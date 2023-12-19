@@ -1,1 +1,3 @@
 description_field: 'body'
+iiifserver_manifest_attribution_default: 'Provided by Example Organization'
+iiifserver_manifest_rights_text: ""

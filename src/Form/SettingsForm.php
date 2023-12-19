@@ -32,6 +32,20 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('description_field'),
     ];
 
+    $form['iiifserver_manifest_attribution_default'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Default attribution'),
+      '#default_value' => $config->get('iiifserver_manifest_attribution_default'),
+    ];
+
+    $form["iiifserver_manifest_rights_text"] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Default license text (only for iiif 2.0)'),
+      '#default_value' => $config->get("iiifserver_manifest_rights_text"),
+    ];
+
+    
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -41,6 +55,14 @@ class SettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('iiif_server.settings')
       ->set('description_field', $form_state->getValue('description_field'))
+      ->save();
+
+    $this->config('iiif_server.settings')
+      ->set('iiifserver_manifest_attribution_default', $form_state->getValue('iiifserver_manifest_attribution_default'))
+      ->save();
+
+      $this->config('iiif_server.settings')
+      ->set('iiifserver_manifest_rights_text', $form_state->getValue('iiifserver_manifest_rights_text'))
       ->save();
 
     parent::submitForm($form, $form_state);
