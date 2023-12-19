@@ -57,6 +57,8 @@ class IiifServerController extends ControllerBase {
       $protocol = isset($_SERVER['HTTPS']) ? 'https' : 'http';
       $prefix = $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/iiif/{$version}/{$node}/";
 
+      $metadata = $this->getMetadata($nodeEntity);
+
       $manifest = [
         '@context' => 'http://iiif.io/api/presentation/2/context.json',
         '@id' => $prefix . 'manifest',
@@ -65,7 +67,11 @@ class IiifServerController extends ControllerBase {
         'description' => $description,
         'license' => null,
         'attribution' => $iiifserver_manifest_attribution_default,
-        'related' => $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/jsonapi/node/" . $nodeType . "/" . $uuid,
+        "seeAlso" => [
+          "@id" => $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/jsonapi/node/" . $nodeType . "/" . $uuid,
+          "format" => "application/ld+json"
+        ],
+        'metadata' => $metadata,
         'sequences' => [
           [
             '@id' => $prefix . 'sequence/normal',
@@ -142,5 +148,34 @@ class IiifServerController extends ControllerBase {
     }
 
     return new JsonResponse($manifest);
+  }
+
+  /**
+   * ノードエンティティからメタデータを取得します。
+   *
+   * @param \Drupal\node\NodeInterface $nodeEntity ノードエンティティ
+   * @return array メタデータの配列
+   */
+  private function getMetadata($nodeEntity) {
+    // エンティティタイプマネージャーを使用して、フィールド定義を取得
+    $fieldDefinitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', $nodeType);
+
+    // フィールドのキーとラベルを格納する配列
+    $metadata = [];
+
+    foreach ($fieldDefinitions as $fieldName => $definition) {
+      // フィールドのキー（フィールド名）とラベルを取得
+
+      // フィールド名が 'field_' で始まるかチェック
+      if (strpos($fieldName, 'field_') === 0 && $nodeEntity->hasField($fieldName)) {
+
+        $metadata[] = [
+          'label' => $definition->getLabel(),
+          'value' => $nodeEntity->get($fieldName)->value,
+        ];
+      }
+    }
+
+    return $metadata;
   }
 }
