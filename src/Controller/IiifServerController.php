@@ -69,7 +69,7 @@ class IiifServerController extends ControllerBase {
         'attribution' => $iiifserver_manifest_attribution_default,
         "seeAlso" => [
           "@id" => $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/jsonapi/node/" . $nodeType . "/" . $uuid,
-          "format" => "application/ld+json"
+          "format" => "application/vnd.api+json"
         ],
         'metadata' => $metadata,
         'sequences' => [
@@ -157,6 +157,8 @@ class IiifServerController extends ControllerBase {
    * @return array メタデータの配列
    */
   private function getMetadata($nodeEntity) {
+    $nodeType = $nodeEntity->getType();
+
     // エンティティタイプマネージャーを使用して、フィールド定義を取得
     $fieldDefinitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', $nodeType);
 
@@ -169,10 +171,16 @@ class IiifServerController extends ControllerBase {
       // フィールド名が 'field_' で始まるかチェック
       if (strpos($fieldName, 'field_') === 0 && $nodeEntity->hasField($fieldName)) {
 
-        $metadata[] = [
-          'label' => $definition->getLabel(),
-          'value' => $nodeEntity->get($fieldName)->value,
-        ];
+        // フィールドタイプを取得
+        $fieldType = $definition->getType();
+
+        // フィールドタイプがテキストまたは数値の場合に処理
+        if (in_array($fieldType, ['string', 'string_long', 'text', 'text_long', 'text_with_summary', 'integer', 'decimal', 'float'])) {
+            $metadata[] = [
+                'label' => $definition->getLabel(),
+                'value' => $nodeEntity->get($fieldName)->value,
+            ];
+        }
       }
     }
 
