@@ -64,8 +64,8 @@ class IiifServerController extends ControllerBase {
         '@id' => $prefix . 'manifest',
         '@type' => 'sc:Manifest',
         'label' => $title,
-        'description' => $description,
-        'license' => null,
+        // 'description' => $description,
+        // 'license' => null,
         'attribution' => $iiifserver_manifest_attribution_default,
         "seeAlso" => [
           "@id" => $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/jsonapi/node/" . $nodeType . "/" . $uuid,
@@ -82,6 +82,10 @@ class IiifServerController extends ControllerBase {
         ],
       ];
 
+      if ($description) {
+        $manifest['description'] = $description;
+      }
+
       if ($iiifserver_manifest_rights_text) {
         $manifest['license'] = $iiifserver_manifest_rights_text;
       }
@@ -89,9 +93,15 @@ class IiifServerController extends ControllerBase {
       if ($nodeEntity->hasField('field_iiif_images') && !$nodeEntity->get('field_iiif_images')->isEmpty()) {
         foreach ($nodeEntity->get('field_iiif_images') as $index => $fieldItem) {
           $num = $index + 1;
+
+          $imageEntity = $fieldItem->entity;
+
+          if (!$imageEntity) {
+            continue;
+          }
     
           // 各画像のURLと幅を取得
-          $uri = $fieldItem->entity->field_iiif_image_url->uri;
+          $uri = $imageEntity->get('title')->value;
 
           $serviceId = str_replace('/info.json', '', $uri);
 
@@ -176,6 +186,10 @@ class IiifServerController extends ControllerBase {
 
         // フィールドタイプがテキストまたは数値の場合に処理
         if (in_array($fieldType, ['string', 'string_long', 'text', 'text_long', 'text_with_summary', 'integer', 'decimal', 'float'])) {
+          $value = $nodeEntity->get($fieldName)->value;
+          if (empty($value)) {
+            continue;
+          }
             $metadata[] = [
                 'label' => $definition->getLabel(),
                 'value' => $nodeEntity->get($fieldName)->value,

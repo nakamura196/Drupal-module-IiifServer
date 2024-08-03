@@ -23,13 +23,7 @@ function iiif_server_install() {
       'label' => 'IIIF Image Height',
       'description' => 'The height of the IIIF image',
       'cardinality' => 1,
-    ],
-    'field_iiif_image_url' => [
-        'type' => 'link',
-        'label' => 'IIIF Image URL',
-        'description' => 'The URL of the IIIF image. This value ends with `info.json`.',
-        'cardinality' => 1,
-    ],
+    ]
   ];
 
   foreach ($fields as $field_name => $field_info) {
@@ -70,26 +64,6 @@ function iiif_server_install() {
       'status' => TRUE,
     ]);
   }
-
-  /*
-  // 画像幅フィールド用ウィジェット設定
-  $form_display->setComponent('field_iiif_image_width', [
-    'type' => 'number', // 整数フィールドには 'number' ウィジェットを使用
-    'weight' => 0,
-  ]);
-
-  // 画像高さフィールド用ウィジェット設定
-  $form_display->setComponent('field_iiif_image_height', [
-    'type' => 'number',
-    'weight' => 1,
-  ]);
-  */
-
-  // 画像URLフィールド用ウィジェット設定
-  $form_display->setComponent('field_iiif_image_url', [
-    'type' => 'link_default', // リンクフィールドには 'link_default' ウィジェットを使用
-    'weight' => 2,
-  ]);
   
 
   
@@ -109,12 +83,6 @@ function iiif_server_install() {
     ]);
   }
 
-  // 画像URLフィールド用の表示設定
-  $view_display->setComponent('field_iiif_image_url', [
-    'type' => 'link',
-    'weight' => 0,
-  ]);
-
   $view_display->save();
 }
 
@@ -126,7 +94,6 @@ function iiif_server_uninstall() {
   $fields = [
     'field_iiif_image_width',
     'field_iiif_image_height',
-    'field_iiif_image_url',
   ];
 
   // 各フィールドの削除
