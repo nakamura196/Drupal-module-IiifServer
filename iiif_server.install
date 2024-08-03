@@ -3,15 +3,42 @@
  * Implements hook_install().
  */
 function iiif_server_install() {
+  // Ensure the content type does not already exist before creating it.
+  if (!\Drupal\node\Entity\NodeType::load('iiif_media')) {
+    create_content_type();
+  }
+
+  // Define fields to be added.
+  $fields = define_fields();
+
+  // Add fields to content type.
+  add_fields_to_content_type('iiif_media', $fields);
+
+  // Configure form and view displays.
+  configure_display('node.iiif_media.default', $fields, 'form');
+  configure_display('node.iiif_media.default', $fields, 'view');
+}
+
+/**
+ * Creates the IIIF Media content type.
+ */
+function create_content_type() {
   $node_type = \Drupal\node\Entity\NodeType::create([
-    'type' => 'iiif_media', // コンテンツタイプのマシン名
-    'name' => 'IIIF Media', // コンテンツタイプの表示名
-    'description' => 'A content type for IIIF media items.', // コンテンツタイプの説明
+    'type' => 'iiif_media',
+    'name' => 'IIIF Media',
+    'description' => 'A content type for IIIF media items.',
   ]);
   $node_type->save();
+}
 
-  // Define the fields to be added.
-  $fields = [
+/**
+ * Defines the fields to be added to the content type.
+ *
+ * @return array
+ *   An associative array of field definitions.
+ */
+function define_fields() {
+  return [
     'field_iiif_image_width' => [
       'type' => 'integer',
       'label' => 'IIIF Image Width',
@@ -23,89 +50,116 @@ function iiif_server_install() {
       'label' => 'IIIF Image Height',
       'description' => 'The height of the IIIF image',
       'cardinality' => 1,
-    ]
+    ],
   ];
+}
 
+/**
+ * Adds fields to a content type.
+ *
+ * @param string $bundle
+ *   The content type machine name.
+ * @param array $fields
+ *   An associative array of field definitions.
+ */
+function add_fields_to_content_type($bundle, array $fields) {
   foreach ($fields as $field_name => $field_info) {
-    // Check if the field already exists.
-    // フィールドが既に存在するかチェック
     $field_definitions = \Drupal::service('entity_field.manager')->getFieldStorageDefinitions('node');
     if (!isset($field_definitions[$field_name])) {
       $field_storage = \Drupal\field\Entity\FieldStorageConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'node',
         'type' => $field_info['type'],
-        'cardinality' => $field_info['cardinality'], // Here's where we use the cardinality setting
+        'cardinality' => $field_info['cardinality'],
       ]);
       $field_storage->save();
 
-      // Create the field.
       $field = \Drupal\field\Entity\FieldConfig::create([
         'field_name' => $field_name,
         'entity_type' => 'node',
-        'bundle' => 'iiif_media', // Change this to your content type.
+        'bundle' => $bundle,
         'label' => $field_info['label'],
         'description' => $field_info['description'],
       ]);
       $field->save();
     }
   }
+}
 
-  // フォームディスプレイの設定
-  $form_display = \Drupal::entityTypeManager()
-    ->getStorage('entity_form_display')
-    ->load('node.iiif_media.default');
+/**
+ * Configures the display settings for the form or view mode.
+ *
+ * @param string $display_name
+ *   The display name (e.g., 'node.iiif_media.default').
+ * @param array $fields
+ *   An associative array of field definitions.
+ * @param string $display_type
+ *   The type of display to configure ('form' or 'view').
+ */
+function configure_display($display_name, array $fields, $display_type) {
+  if ($display_type == 'form') {
+    $display = \Drupal::entityTypeManager()->getStorage('entity_form_display')->load($display_name);
+    if (!$display) {
+      $display = \Drupal\Core\Entity\Entity\EntityFormDisplay::create([
+        'targetEntityType' => 'node',
+        'bundle' => 'iiif_media',
+        'mode' => 'default',
+        'status' => TRUE,
+      ]);
+    }
 
-  if (!$form_display) {
-    $form_display = \Drupal\Core\Entity\Entity\EntityFormDisplay::create([
-      'targetEntityType' => 'node',
-      'bundle' => 'iiif_media',
-      'mode' => 'default',
-      'status' => TRUE,
-    ]);
+    foreach ($fields as $field_name => $field_info) {
+      $display->setComponent($field_name, [
+        'type' => 'text_textfield', // Change this to the appropriate widget type for the field
+        'weight' => 0,
+      ]);
+    }
+  } elseif ($display_type == 'view') {
+    $display = \Drupal::entityTypeManager()->getStorage('entity_view_display')->load($display_name);
+    if (!$display) {
+      $display = \Drupal\Core\Entity\Entity\EntityViewDisplay::create([
+        'targetEntityType' => 'node',
+        'bundle' => 'iiif_media',
+        'mode' => 'default',
+        'status' => TRUE,
+      ]);
+    }
+
+    foreach ($fields as $field_name => $field_info) {
+      $display->setComponent($field_name, [
+        'label' => 'above',
+        'type' => 'text_default', // Change this to the appropriate formatter type for the field
+        'weight' => 0,
+      ]);
+    }
   }
-  
 
-  
-  $form_display->save();
-
-  // ビューディスプレイの設定
-  $view_display = \Drupal::entityTypeManager()
-    ->getStorage('entity_view_display')
-    ->load('node.iiif_media.default');
-
-  if (!$view_display) {
-    $view_display = \Drupal\Core\Entity\Entity\EntityViewDisplay::create([
-      'targetEntityType' => 'node',
-      'bundle' => 'iiif_media',
-      'mode' => 'default',
-      'status' => TRUE,
-    ]);
-  }
-
-  $view_display->save();
+  $display->save();
 }
 
 /**
  * Implements hook_uninstall().
  */
 function iiif_server_uninstall() {
-  $content_type = 'iiif_media';
+  
   $fields = [
     'field_iiif_image_width',
     'field_iiif_image_height',
   ];
 
-  // 各フィールドの削除
+  // Delete each field.
   foreach ($fields as $field_name) {
     if ($field_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', $field_name)) {
       $field_storage->delete();
     }
   }
 
-  // コンテンツタイプの削除
-  $node_type = \Drupal\node\Entity\NodeType::load($content_type);
-  if ($node_type) {
-    $node_type->delete();
+  // Optionally delete the content type.
+  if (false) { // Change to true if you want to delete the content type.
+    $content_type = 'iiif_media';
+    $node_type = \Drupal\node\Entity\NodeType::load($content_type);
+    if ($node_type) {
+      $node_type->delete();
+    }
   }
 }

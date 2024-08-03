@@ -10,8 +10,11 @@ function iiif_server_entity_presave(EntityInterface $entity) {
   // Only act on nodes.
 
   if ($entity instanceof NodeInterface && $entity->bundle() == 'iiif_media') {
+    // Load the original node to compare the title.
+    $originalEntity = \Drupal::entityTypeManager()->getStorage('node')->loadUnchanged($entity->id());
+
     // Nodeのタイトルが更新されているか確認する
-    if ($entity->isNew()) {
+    if ($originalEntity && $entity->getTitle() !== $originalEntity->getTitle()) {
       $url = $entity->getTitle();
       $client = \Drupal::httpClient();
 

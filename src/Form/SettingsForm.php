@@ -32,6 +32,18 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('description_field'),
     ];
 
+    $form['iiifserver_field'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('IIIF Server Field'),
+      '#default_value' => $config->get('iiifserver_field'),
+    ];
+
+    $form['iiifserver_manifest_rights_property'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('iiifserver_manifest_rights_property'),
+      '#default_value' => $config->get('iiifserver_manifest_rights_property'),
+    ];
+
     $form['iiifserver_manifest_attribution_default'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Default attribution'),
@@ -55,6 +67,14 @@ class SettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('iiif_server.settings')
       ->set('description_field', $form_state->getValue('description_field'))
+      ->save();
+
+    $this->config('iiif_server.settings')
+      ->set('iiifserver_field', $form_state->getValue('iiifserver_field'))
+      ->save();
+
+      $this->config('iiif_server.settings')
+      ->set('iiifserver_manifest_rights_property', $form_state->getValue('iiifserver_manifest_rights_property'))
       ->save();
 
     $this->config('iiif_server.settings')
