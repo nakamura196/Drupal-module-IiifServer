@@ -13,23 +13,20 @@ function iiif_server_entity_presave(EntityInterface $entity) {
     // Load the original node to compare the title.
     $originalEntity = \Drupal::entityTypeManager()->getStorage('node')->loadUnchanged($entity->id());
 
-    // Nodeのタイトルが更新されているか確認する
-    if ($originalEntity && $entity->getTitle() !== $originalEntity->getTitle()) {
-      $url = $entity->getTitle();
-      $client = \Drupal::httpClient();
+    $url = $entity->getTitle();
+    $client = \Drupal::httpClient();
 
-      try {
-        $response = $client->request('GET', $url);
-        if ($response->getStatusCode() == 200) {
-          $data = json_decode($response->getBody());
-          if (isset($data->width) && isset($data->height)) {
-            $entity->set('field_iiif_image_width', $data->width);
-            $entity->set('field_iiif_image_height', $data->height);
-          }
+    try {
+      $response = $client->request('GET', $url);
+      if ($response->getStatusCode() == 200) {
+        $data = json_decode($response->getBody());
+        if (isset($data->width) && isset($data->height)) {
+          $entity->set('field_iiif_image_width', $data->width);
+          $entity->set('field_iiif_image_height', $data->height);
         }
-      } catch (RequestException $e) {
-        \Drupal::logger('iiif_server')->error('Error fetching IIIF data: @message', ['@message' => $e->getMessage()]);
       }
+    } catch (RequestException $e) {
+      \Drupal::logger('iiif_server')->error('Error fetching IIIF data: @message', ['@message' => $e->getMessage()]);
     }
   }
 }
