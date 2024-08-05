@@ -56,7 +56,11 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get("iiifserver_manifest_rights_text"),
     ];
 
-    
+    $form["iiifserver_manifest_viewing_direction_property"] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Property to use for viewing direction'),
+      '#default_value' => $config->get("iiifserver_manifest_viewing_direction_property"),
+    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -83,6 +87,10 @@ class SettingsForm extends ConfigFormBase {
 
       $this->config('iiif_server.settings')
       ->set('iiifserver_manifest_rights_text', $form_state->getValue('iiifserver_manifest_rights_text'))
+      ->save();
+
+      $this->config('iiif_server.settings')
+      ->set("iiifserver_manifest_viewing_direction_property", $form_state->getValue("iiifserver_manifest_viewing_direction_property"))
       ->save();
 
     parent::submitForm($form, $form_state);

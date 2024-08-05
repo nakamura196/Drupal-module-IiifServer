@@ -72,6 +72,19 @@ class IiifServerController extends ControllerBase {
 
     $iiifserver_field = $config->get("iiifserver_field");
 
+    $sequence = [
+      '@id' => $prefix . 'sequence/normal',
+      '@type' => 'sc:Sequence',
+      "label" => "Current Page Order",
+      'canvases' => $this->getCanvases($nodeEntity, $iiifserver_field, $prefix),
+    ];
+
+    $iiifserver_manifest_viewing_direction_property = $config->get('iiifserver_manifest_viewing_direction_property');
+
+    if($iiifserver_manifest_viewing_direction_property) {
+      $sequence["viewingDirection"] = $nodeEntity->hasField($iiifserver_manifest_viewing_direction_property) && !$nodeEntity->get($iiifserver_manifest_viewing_direction_property)->isEmpty() ? $nodeEntity->get($iiifserver_manifest_viewing_direction_property)->value : '';
+    }
+
     $manifest = [
       '@context' => 'http://iiif.io/api/presentation/2/context.json',
       '@id' => $prefix . 'manifest',
@@ -81,12 +94,7 @@ class IiifServerController extends ControllerBase {
       "seeAlso" => $this->createSeeAlso($nodeEntity, $prefix),
       'metadata' => $metadata,
       'sequences' => [
-        [
-          '@id' => $prefix . 'sequence/normal',
-          '@type' => 'sc:Sequence',
-          "label" => "Current Page Order",
-          'canvases' => $this->getCanvases($nodeEntity, $iiifserver_field, $prefix),
-        ],
+        $sequence
       ],
     ];
 

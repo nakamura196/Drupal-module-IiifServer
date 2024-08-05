@@ -3,3 +3,4 @@ iiifserver_field: 'field_iiif_image'
 iiifserver_manifest_rights_property: ''
 iiifserver_manifest_attribution_default: 'Provided by Example Organization'
 iiifserver_manifest_rights_text: ""
+iiifserver_manifest_viewing_direction_property: ""
