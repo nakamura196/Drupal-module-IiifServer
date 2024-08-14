@@ -1,6 +1,7 @@
 description_field: 'body'
 iiifserver_field: 'field_iiif_image'
-iiifserver_manifest_rights_property: ''
+iiifserver_manifest_rights_property: 'field_license'
 iiifserver_manifest_attribution_default: 'Provided by Example Organization'
+iiifserver_manifest_attribution_property: 'field_attribution'
 iiifserver_manifest_rights_text: ""
-iiifserver_manifest_viewing_direction_property: ""
+iiifserver_manifest_viewing_direction_property: "field_iiif_direction"

@@ -90,7 +90,7 @@ class IiifServerController extends ControllerBase {
       '@id' => $prefix . 'manifest',
       '@type' => 'sc:Manifest',
       'label' => $title,
-      'attribution' => $iiifserver_manifest_attribution_default,
+      // 'attribution' => $iiifserver_manifest_attribution_default,
       "seeAlso" => $this->createSeeAlso($nodeEntity, $prefix),
       'metadata' => $metadata,
       'sequences' => [
@@ -105,14 +105,37 @@ class IiifServerController extends ControllerBase {
     }
 
     $iiifserver_manifest_rights_text = $config->get('iiifserver_manifest_rights_text');
-    if ($iiifserver_manifest_rights_text) {
-      $manifest['license'] = $iiifserver_manifest_rights_text;
-    } else {
-      $iiifserver_manifest_rights_property = $config->get('iiifserver_manifest_rights_property');
+    $iiifserver_manifest_rights_property = $config->get('iiifserver_manifest_rights_property');
+
+    if($iiifserver_manifest_rights_property) {
       $license = $this->getFieldValue($nodeEntity, $iiifserver_manifest_rights_property, 'uri');
       if ($license) {
         $manifest['license'] = $license;
       }
+    } else if ($iiifserver_manifest_rights_text) {
+      $manifest['license'] = $iiifserver_manifest_rights_text;
+    }
+    /*
+    if ($iiifserver_manifest_rights_text) {
+      $manifest['license'] = $iiifserver_manifest_rights_text;
+    } else {
+      
+      $license = $this->getFieldValue($nodeEntity, $iiifserver_manifest_rights_property, 'uri');
+      if ($license) {
+        $manifest['license'] = $license;
+      }
+    }
+    */
+
+    $iiifserver_manifest_attribution_property = $config->get('iiifserver_manifest_attribution_property');
+
+    if ($iiifserver_manifest_attribution_property) {
+      $attribution = $this->getFieldValue($nodeEntity, $iiifserver_manifest_attribution_property, 'value');
+      if ($attribution) {
+        $manifest['attribution'] = $attribution;
+      }
+    } else {
+      $manifest['attribution'] = $iiifserver_manifest_attribution_default;
     }
 
     return $manifest;
@@ -196,6 +219,9 @@ class IiifServerController extends ControllerBase {
    * @return array メタデータの配列
    */
   private function getMetadata(NodeInterface $nodeEntity) {
+    // ログインユーザーのアカウントを取得
+    $current_user = \Drupal::currentUser();
+    
     $nodeType = $nodeEntity->getType();
     $fieldDefinitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', $nodeType);
     $metadata = [];
@@ -203,12 +229,19 @@ class IiifServerController extends ControllerBase {
     $skipFields = [$config->get('iiifserver_manifest_rights_property')];
 
     foreach ($fieldDefinitions as $fieldName => $definition) {
+
+
+      $field = $nodeEntity->get($fieldName);
+        
+      // フィールドのビュー権限をチェック
+      if (!$field->access('view', $current_user)) {
+        continue;
+      }
+
       if ($this->isValidField($nodeEntity, $fieldName, $skipFields)) {
         $fieldType = $definition->getType();
 
-        
-
-          // フィールドタイプがテキストまたは数値の場合に処理
+        // フィールドタイプがテキストまたは数値の場合に処理
         if (in_array($fieldType, ['string', 'string_long', 'text', 'text_long', 'text_with_summary', 'integer', 'decimal', 'float'])) {
           $value = $this->getFieldValue($nodeEntity, $fieldName, "value");
           if (!empty($value)) {
