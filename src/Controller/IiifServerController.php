@@ -8,8 +8,15 @@ use Drupal\node\NodeInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+use Drupal\iiif_server\View\Helper\IiifManifest3;
+
 class IiifServerController extends ControllerBase {
   public function generateManifest($version, $node) {
+
+    if ($version != "2" && $version != "3") {
+        return new JsonResponse(['error' => 'Unsupported IIIF version.'], 400);
+    }
+
     $nodeEntity = $this->loadNodeEntityByUuidOrId($node);
     if (!$nodeEntity) {
         return new JsonResponse(['error' => 'Invalid node identifier.'], 400);
@@ -19,6 +26,19 @@ class IiifServerController extends ControllerBase {
     $protocol = $this->getRequestProtocol();
 
     $prefix = $this->generatePrefix($protocol, $baseUrl, $version, $node);
+
+    if ($version == "3") {
+      // Instantiate the IiifManifest3 class
+      $manifestBuilder = new IiifManifest3();
+
+      $manifest = $manifestBuilder->buildManifestVersion3($nodeEntity, $prefix);
+
+      return new JsonResponse($manifest);
+    }
+
+    
+
+    
     
     $manifest = $this->buildManifest($version, $nodeEntity, $prefix);
 
