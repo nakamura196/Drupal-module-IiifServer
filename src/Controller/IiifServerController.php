@@ -17,7 +17,7 @@ class IiifServerController extends ControllerBase {
         return new JsonResponse(['error' => 'Unsupported IIIF version.'], 400);
     }
 
-    $nodeEntity = $this->loadNodeEntityByUuidOrId($node);
+    $nodeEntity = $this->loadNodeEntityByUuidOrNIdOrId($node);
     if (!$nodeEntity) {
         return new JsonResponse(['error' => 'Invalid node identifier.'], 400);
     }
@@ -45,12 +45,40 @@ class IiifServerController extends ControllerBase {
     return new JsonResponse($manifest);
   }
 
-  private function loadNodeEntityByUuidOrId($node) {
+  private function loadNodeEntityByUuidOrNIdOrId($node) {
+    $entityTypeManager = \Drupal::entityTypeManager();
+    $nodeStorage = $entityTypeManager->getStorage('node');
+    /*
     $nodeEntity = \Drupal::entityTypeManager()->getStorage('node')->load($node);
     if (!$nodeEntity) {
         $nodeEntity = \Drupal::service('entity.repository')->loadEntityByUuid('node', $node);
     }
     return $nodeEntity;
+    */
+    // まず、UUIDでノードを検索
+    $nodeEntity = \Drupal::service('entity.repository')->loadEntityByUuid('node', $node);
+
+    // UUIDで見つからなければ、field_idで検索
+    if (!$nodeEntity) {
+        // field_id でノードを検索するためのクエリ
+        $query = $entityTypeManager->getStorage('node')->getQuery()
+            ->condition('field_id', $node)  // field_idの値で検索
+            ->accessCheck(TRUE);  // アクセスチェックを有効にする
+
+        $nids = $query->execute();
+
+        // field_idに一致するノードがあれば、最初のノードを取得
+        if (!empty($nids)) {
+            $nodeEntity = $nodeStorage->load(reset($nids));
+        }
+    }
+
+    // field_idでも見つからなければ、NIDで検索
+    if (!$nodeEntity) {
+        $nodeEntity = $nodeStorage->load($node);
+    }
+ 
+     return $nodeEntity;
   }
 
   private function getBaseUrl() {
