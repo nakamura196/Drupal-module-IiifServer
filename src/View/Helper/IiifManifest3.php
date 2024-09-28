@@ -19,6 +19,8 @@ class IiifManifest3 {
 
         $canvases = $this->createCanvases($nodeEntity, $prefix, $iiifserver_field);
 
+        $helper = new IiifHelper();
+
         $manifest = [
             
             '@context' => 'http://iiif.io/api/presentation/3/context.json',
@@ -29,11 +31,11 @@ class IiifManifest3 {
                     $nodeEntity->getTitle()
                 ]
             ],
-            
+            "seeAlso" => $helper->createSeeAlso3($nodeEntity, $prefix)
                 
         ];
 
-        $helper = new IiifHelper();
+        
 
         $licenseUri = $helper->getLicenseUri($nodeEntity);
         if ($licenseUri) {

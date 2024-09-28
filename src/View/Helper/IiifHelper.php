@@ -75,4 +75,25 @@ class IiifHelper {
 
         return $attributions;
     }
+
+    public function createSeeAlso3($nodeEntity, $prefix) {
+      // ノードのUUIDを取得
+      $uuid = $nodeEntity->uuid();
+
+      // ノードのタイプを取得
+      $nodeType = $nodeEntity->getType();
+
+      $apiPrefix = explode('/api/iiif/', $prefix)[0];
+
+      return [
+        "id" => $apiPrefix . "/jsonapi/node/" . $nodeType . "/" . $uuid,
+        "type" => "Dataset",
+        "label" => [
+            "none" => [
+                "Api rest json"
+            ]
+        ],
+        "format" => "application/vnd.api+json"
+      ];
+    }
 }

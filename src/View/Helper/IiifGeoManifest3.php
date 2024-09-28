@@ -14,8 +14,7 @@ class IiifGeoManifest3 {
 
         $canvases = $this->createCanvases($nodeEntity, $prefix, $iiifserver_field);
 
-        
-        
+        $helper = new IiifHelper();
 
         $manifest = [
             
@@ -30,11 +29,9 @@ class IiifGeoManifest3 {
                     $nodeEntity->getTitle()
                 ]
             ],
-            
+            "seeAlso" => $helper->createSeeAlso3($nodeEntity, $prefix)
                 
         ];
-
-        $helper = new IiifHelper();
 
         $licenseUri = $helper->getLicenseUri($nodeEntity);
         if ($licenseUri) {
