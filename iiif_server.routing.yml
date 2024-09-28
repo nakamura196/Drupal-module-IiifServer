@@ -1,9 +1,27 @@
 # iiif_server.routing.yml
+iiif_server.collection:
+  path: '/api/iiif/{version}/collection/{node}'
+  methods: [GET]
+  defaults:
+    _controller: '\Drupal\iiif_server\Controller\IiifServerController::generateCollection'
+    _format: json
+  requirements:
+    _permission: 'access content'
+
 iiif_server.generate:
   path: '/api/iiif/{version}/{node}/manifest'
   methods: [GET]
   defaults:
     _controller: '\Drupal\iiif_server\Controller\IiifServerController::generateManifest'
+    _format: json
+  requirements:
+    _permission: 'access content'
+
+iiif_server.geo:
+  path: '/api/iiif/{version}/{node}/geo/manifest'
+  methods: [GET]
+  defaults:
+    _controller: '\Drupal\iiif_server\Controller\IiifServerController::generateGeoManifest'
     _format: json
   requirements:
     _permission: 'access content'

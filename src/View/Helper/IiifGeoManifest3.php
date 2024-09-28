@@ -3,13 +3,8 @@
 namespace Drupal\iiif_server\View\Helper;
 
 use Drupal\node\NodeInterface;
-use Drupal\iiif_server\View\Helper\IiifHelper;
 
-class IiifManifest3 {
-
-    
-
-    
+class IiifGeoManifest3 {
 
     public function buildManifestVersion3(NodeInterface $nodeEntity, $prefix) {
 
@@ -19,9 +14,15 @@ class IiifManifest3 {
 
         $canvases = $this->createCanvases($nodeEntity, $prefix, $iiifserver_field);
 
+        
+        
+
         $manifest = [
             
-            '@context' => 'http://iiif.io/api/presentation/3/context.json',
+            '@context' => [
+                'http://iiif.io/api/presentation/3/context.json',
+                "http://iiif.io/api/extension/georef/1/context.json"
+            ],
             'id' => $prefix . 'manifest',
             'type' => 'Manifest',
             'label' => [
@@ -54,6 +55,7 @@ class IiifManifest3 {
                 ]
             ];
         }
+
 
         $manifest["items"] = $canvases;
 
@@ -112,6 +114,7 @@ class IiifManifest3 {
                             'id' =>  $canvasId . "/page/imageanno",
                             'type' => 'Annotation',
                             'motivation' => 'painting',
+                            // 'motivation' => 'georeferencing',
                             'body' => [
                                 'id' => $prefix . 'image',
                                 'type' => 'Image',
@@ -161,43 +164,57 @@ class IiifManifest3 {
             $title = $node->getTitle();
             $xywh = $node->get('field_xywh')->value; // 例: 0,0,500,500
             $body = $node->get('body')->value; // アノテーションの内容
+            $field_geo = $node->get("field_geo"); // ->value;
 
-            $commonId = $node->get('field_jk')->value;
+            if ($field_geo === null) {
+                continue;
+            }
+
+            
+            if ($field_geo->lon === null) {
+                continue;
+            }
 
             $annotations[] = [
+                "field_id" => $node->get("field_id")->value,
                 "title" => $title,
                 "field_xywh" => $xywh,
                 "field_body" => $body,
-                "field_commonId" => $commonId,
+                "field_geo" => [
+                    $field_geo->lon,
+                    $field_geo->lat
+                ]
             ];
         }
 
         $items = [];
-
         
         foreach ($annotations as $index => $anno) {
-            $item = [
-                "id" => $canvasId . "/annos/" . ($index + 1),
-                "type" => "Annotation",
-                "motivation" => "commenting",
-                "target" => $canvasId . "#xywh=" . $anno["field_xywh"],
-                "body" => [
-                    "type" => "TextualBody",
-                    "value" => isset($anno["field_body"]) && $anno["field_body"] !== null ? $anno["field_body"] : $anno["title"]
-                ]
-            ];
+            // xywh の文字列をカンマで分割して x, y, w, h を取得
+            list($x, $y, $width, $height) = explode(',', $anno["field_xywh"]);
 
-            if($anno["field_commonId"] != null) {
-                # $item["id"] = $anno["field_commonId"];
-                $item["_compare"] = [
-                    "id" => $anno["field_commonId"],
-                    "label" => $anno["title"]
+            // 中心座標を計算
+            $centerX = $x + ($width / 2);
+            $centerY = $y + ($height / 2);
+
+            $items[] = 
+                [
+                    "type" => "Feature",
+                    "metadata" => [
+                        "xywh" => $anno["field_xywh"],
+                        "label" => $anno["title"],
+                        "id" => $anno["field_id"],
+                    ],
+                    "geometry" => [
+                        "coordinates" => $anno["field_geo"],
+                        "type" => "Point"
+                    ],
+                    "properties" => [
+                        "resourceCoords" => [
+                            $centerX, $centerY
+                        ]
+                    ]
                 ];
-                $item["cid"] = $anno["field_commonId"];
-            }
-
-            $items[] = $item;
-                
         }
                 
         
@@ -205,7 +222,26 @@ class IiifManifest3 {
             [
                 "id" => $canvasId . "/annos",
                 "type" => "AnnotationPage",
-                "items" => $items
+                "items" => [
+                    [
+                        "id" => $canvasId . "/annos/geo",
+                        "type" => "Annotation",
+                        "motivation" => "georeferencing",
+                        
+                        "target" => $canvasId,
+                        "body" => [
+                            "features" => $items,
+                            "id" => $canvasId . "/annos/geo/features",
+                            "transformation" => [
+                                "options" => [
+                                    "order" => 1
+                                ],
+                                "type" => "polynomial"
+                            ],
+                            "type" => "FeatureCollection"
+                        ]
+                    ]
+                ]
             ]
         ];
     }

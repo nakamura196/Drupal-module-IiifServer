@@ -9,8 +9,38 @@ use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 use Drupal\iiif_server\View\Helper\IiifManifest3;
+use Drupal\iiif_server\View\Helper\IiifCollection3;
+use Drupal\iiif_server\View\Helper\IiifGeoManifest3;
 
 class IiifServerController extends ControllerBase {
+
+  // NodeInterface 
+  public function generateCollection($version, $node) {
+    
+    $nodeEntity = $this->loadNodeEntityByUuidOrNIdOrId($node);
+    if (!$nodeEntity) {
+      return new JsonResponse(['error' => 'Invalid node identifier.'], 400);
+    }
+
+    $baseUrl = $this->getBaseUrl();
+    $protocol = $this->getRequestProtocol();
+    
+    $prefix = $this->generateCollectionPrefix($protocol, $baseUrl, $version, $node);
+
+
+    
+    if ($version == "3") {
+      // Instantiate the IiifCollection3 class
+      $collectionBuilder = new IiifCollection3();
+
+      $collection = $collectionBuilder->buildCollectionVersion3($nodeEntity, $prefix, $node);
+
+      return new JsonResponse($collection);
+    }
+
+    return new JsonResponse([]);
+  }
+
   public function generateManifest($version, $node) {
 
     if ($version != "2" && $version != "3") {
@@ -43,6 +73,33 @@ class IiifServerController extends ControllerBase {
     $manifest = $this->buildManifest($version, $nodeEntity, $prefix);
 
     return new JsonResponse($manifest);
+  }
+
+  public function generateGeoManifest($version, $node) {
+    if ($version != "2" && $version != "3") {
+      return new JsonResponse(['error' => 'Unsupported IIIF version.'], 400);
+    }
+
+    $nodeEntity = $this->loadNodeEntityByUuidOrNIdOrId($node);
+    if (!$nodeEntity) {
+        return new JsonResponse(['error' => 'Invalid node identifier.'], 400);
+    }
+
+    $baseUrl = $this->getBaseUrl();
+    $protocol = $this->getRequestProtocol();
+
+    $prefix = $this->generatePrefix($protocol, $baseUrl, $version, $node);
+
+    if ($version == "3") {
+      // Instantiate the IiifManifest3 class
+      $manifestBuilder = new IiifGeoManifest3();
+
+      $manifest = $manifestBuilder->buildManifestVersion3($nodeEntity, $prefix);
+
+      return new JsonResponse($manifest);
+    }
+
+    return new JsonResponse([]);
   }
 
   private function loadNodeEntityByUuidOrNIdOrId($node) {
@@ -94,7 +151,9 @@ class IiifServerController extends ControllerBase {
       return $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/iiif/{$version}/{$node}/";
   }
 
-
+  private function generateCollectionPrefix($protocol, $baseUrl, $version, $node) {
+    return $protocol . "://" . $_SERVER['HTTP_HOST'] . $baseUrl . "/iiif/{$version}";
+}
 
   private function buildManifest($version, NodeInterface $nodeEntity, $prefix) {
     // Implementing IIIF version specific logic...
